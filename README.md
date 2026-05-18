@@ -1,36 +1,475 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 언니사이드 (UnnieSide) — AI 코딩 하네스 룰
 
-## Getting Started
+> **솔로 개발자 + Next.js 웹앱 + AI 코딩 도구 환경**에서 안정적으로 MVP를 개발하기 위한 운영 규칙
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 0. 이 문서의 목적
+
+혼자 AI 도구로 개발할 때 가장 큰 위험은 **"빠르게 만든다 → 코드가 산만해진다 → 어디가 뭐가 있는지 모른다 → 망가져도 못 고친다"** 의 악순환이에요.
+
+이 하네스 룰의 핵심 목표:
+1. **속도는 유지하되, 무너지지 않게**
+2. **AI를 동료처럼 쓰되, 맹신하지 않게**
+3. **나중에 팀이 합류해도 인수인계 가능한 코드베이스로**
+
+---
+
+## 1. AI 도구 역할 분담 (Tool Stack)
+
+### 권장 조합
+| 도구 | 용도 | 비고 |
+|------|------|------|
+| **Claude Code / Cursor** | 메인 코딩 페어 | 둘 중 하나 선택, 익숙한 거 |
+| **Claude (대화형)** | 설계·아키텍처·디버깅 토론 | 코드 짜기 전 단계 |
+| **GitHub Copilot** | 자동완성 보조 (선택) | Cursor 쓰면 불필요 |
+| **v0.dev / Lovable** | UI 프로토타이핑 | 디자인 시안 빠르게 |
+
+### 룰
+- **메인 도구는 하나로 고정** (Cursor 또는 Claude Code). 왔다갔다 하면 컨텍스트가 흩어짐
+- **설계는 대화형 AI로, 구현은 코딩 AI로** 분리. 같은 도구로 설계하고 구현하면 맥락이 섞임
+- **UI 프로토타입(v0)으로 만든 코드는 절대 그대로 프로덕션에 넣지 말 것**. 참고용으로만 사용
+
+---
+
+## 2. AI에게 맡길 일 / 직접 짤 일 (Boundary Rules)
+
+### ✅ AI에게 적극 맡겨도 되는 일
+- 보일러플레이트 코드 (페이지 골격, API 라우트 기본형)
+- CRUD API 라우트
+- 폼 유효성 검증
+- UI 컴포넌트 초안 (Tailwind 스타일링)
+- 타입 정의(TypeScript interface, Zod 스키마)
+- 테스트 코드 작성
+- 정규식, 유틸 함수
+- 마이그레이션 SQL
+- README, 주석, 문서
+
+### ⚠️ AI에게 맡기되 반드시 검증할 일
+- **인증·인가 로직** — 보안 취약점 자주 만듦
+- **결제 관련 코드** — 절대 그대로 믿지 말 것
+- **데이터베이스 스키마 설계** — 마이그레이션 어려움
+- **외부 API 연동** — 실제 응답 구조 다를 수 있음
+- **상태관리 로직** — 미묘한 버그 자주 발생
+
+### 🚫 AI에게 맡기지 말 것 (직접 짜거나 직접 검증)
+- **본인 인증 로직** (여성 검증은 우리 서비스의 핵심)
+- **개인정보 처리 코드** (가치관 데이터는 매우 민감)
+- **매칭 알고리즘 핵심 로직** (우리 IP)
+- **결제·환불 로직**
+- **데이터 삭제·복구 로직**
+- **관리자 권한 처리**
+
+### 핵심 원칙
+> **"AI는 모르는 걸 추측해서 그럴듯하게 만든다."**
+>
+> 따라서 **내가 이해 못 하는 코드는 머지하지 말 것.** AI가 만든 코드를 한 줄씩 읽고 설명할 수 있어야 머지 가능.
+
+---
+
+## 3. 프롬프트 작성 룰
+
+### 좋은 프롬프트 형식
+모든 코딩 요청은 이 구조를 따르기:
+
+```
+[컨텍스트]
+- 우리 프로젝트는 언니사이드 (Next.js 14 App Router + TypeScript + Tailwind + Supabase)
+- 지금 작업 중인 파일: app/onboarding/values/page.tsx
+- 관련 파일: lib/db/schema.ts, types/user.ts
+
+[목표]
+사용자가 가치관 질문에 답하면 결과를 Supabase에 저장하는 기능 추가
+
+[제약사항]
+- 기존 ValuesForm 컴포넌트 재사용
+- 답변은 5점 척도 + "비공개" 옵션
+- TypeScript strict 모드 유지
+
+[기대 결과]
+- 폼 제출 후 /dashboard로 리다이렉트
+- 에러 처리 포함 (toast 알림)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 나쁜 프롬프트 예시
+- ❌ "가치관 질문 페이지 만들어줘"
+- ❌ "여기 버그 있는데 고쳐줘"
+- ❌ "이거 더 좋게 만들어줘"
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 룰
+- **컨텍스트 없는 요청 금지** — 항상 프로젝트 스택, 관련 파일 명시
+- **"적당히" "알아서" 단어 금지** — AI는 추측으로 채움
+- **한 번에 한 작업** — 여러 기능 동시 요청 시 품질 급락
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 4. 코드 리뷰 룰 (Self Review)
 
-To learn more about Next.js, take a look at the following resources:
+혼자 개발해도 **AI와 함께 셀프 리뷰** 필수.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 4-1. 머지 전 체크리스트
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+AI가 작성한 코드를 머지하기 전 반드시 확인:
 
-## Deploy on Vercel
+- [ ] **이 코드가 뭘 하는지 한 문장으로 설명할 수 있는가?**
+- [ ] **모든 함수가 무엇을 받고 무엇을 반환하는지 아는가?**
+- [ ] **에러 처리가 되어 있는가?** (try-catch, 빈 값 체크)
+- [ ] **타입이 명시되어 있는가?** (any 금지)
+- [ ] **하드코딩된 값이 있는가?** (URL, ID, 시크릿 → 환경변수로)
+- [ ] **콘솔 로그 남아있지 않은가?**
+- [ ] **사용하지 않는 import 있는가?**
+- [ ] **함수가 100줄 넘는가?** → 분리 검토
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 4-2. AI에게 리뷰 시키기
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+코드 작성 후 다른 세션에서 AI에게 리뷰 요청:
+
+```
+다음 코드를 보안·성능·가독성 관점에서 리뷰해주세요.
+잠재적 버그나 엣지 케이스도 짚어주세요.
+
+[코드 붙여넣기]
+```
+
+→ 작성한 AI와 다른 세션 또는 다른 도구 사용 (편향 방지)
+
+---
+
+## 5. 파일·폴더 구조 룰 (AI 친화적 구조)
+
+AI는 **작고 명확한 파일**을 좋아하고, **큰 파일을 다룰 때 실수**가 잦아요.
+
+### 권장 구조 (Next.js 14 App Router 기준)
+
+```
+unnieside/
+├── app/                          # 페이지 라우트
+│   ├── (auth)/                   # 인증 그룹
+│   ├── (main)/                   # 메인 앱 그룹
+│   ├── api/                      # API 라우트
+│   └── layout.tsx
+├── components/
+│   ├── ui/                       # 재사용 UI (shadcn/ui)
+│   ├── onboarding/               # 도메인별 컴포넌트
+│   ├── matching/
+│   └── groups/
+├── lib/
+│   ├── db/                       # DB 클라이언트, 쿼리
+│   ├── auth/                     # 인증 로직
+│   ├── matching/                 # 매칭 알고리즘 (핵심 IP)
+│   └── utils/                    # 유틸 함수
+├── types/                        # TypeScript 타입
+├── hooks/                        # Custom Hooks
+└── public/
+```
+
+### 룰
+- **한 파일 = 한 책임** — 페이지 컴포넌트에 비즈니스 로직 섞지 말 것
+- **파일당 최대 300줄** — 넘으면 분리
+- **함수당 최대 50줄** — 넘으면 분리
+- **컴포넌트당 props 최대 7개** — 넘으면 객체로 묶기
+- **lib/matching 폴더는 AI 자동완성 제한** — 핵심 IP이므로 수동 작성
+
+---
+
+## 6. Git 룰
+
+혼자 해도 Git은 **미래의 나를 위한 보험**.
+
+### 6-1. 브랜치 전략 (단순화 버전)
+
+```
+main              ← 항상 배포 가능 상태
+├── develop       ← 통합 개발 브랜치 (선택, MVP는 생략 가능)
+└── feature/*     ← 기능 단위 브랜치
+    fix/*         ← 버그 수정
+    refactor/*    ← 리팩토링
+```
+
+**MVP 단계에선 main + feature 만으로 충분.** develop은 생략.
+
+### 6-2. 커밋 메시지 (Conventional Commits)
+
+```
+feat: 가치관 온보딩 페이지 추가
+fix: 매칭 점수 계산 오류 수정
+refactor: ValuesForm 컴포넌트 분리
+docs: README에 환경변수 가이드 추가
+test: 매칭 알고리즘 단위 테스트 추가
+chore: 의존성 업데이트
+```
+
+### 6-3. 커밋 단위 룰
+- **하나의 논리적 변경 = 하나의 커밋**
+- **AI가 작성한 코드도 의미 단위로 쪼개서 커밋** (한 번에 1000줄 커밋 금지)
+- **WIP(작업중) 커밋 OK** — 단, main에 머지 전 squash
+
+### 6-4. 무조건 .gitignore에 넣기
+```
+.env
+.env.local
+.env.*.local
+node_modules/
+.next/
+*.log
+.DS_Store
+.cursor/
+.vscode/settings.json
+```
+
+---
+
+## 7. 시크릿·보안 룰
+
+여성 전용 앱이라 **개인정보·인증 정보 유출은 곧 서비스 종료**.
+
+### 절대 룰
+- ❌ **API 키, 시크릿, 비밀번호를 코드에 직접 쓰지 말 것**
+- ❌ **`.env` 파일을 Git에 커밋하지 말 것**
+- ❌ **AI에 시크릿이 포함된 코드 붙여넣지 말 것** (Claude/Cursor 학습 위험)
+- ❌ **클라이언트 코드에 서버 시크릿 노출 금지** (NEXT_PUBLIC_ 접두사 주의)
+
+### 권장 패턴
+- 모든 시크릿은 `.env.local`에
+- 프로덕션은 Vercel/배포 플랫폼 환경변수
+- AI에 코드 붙여넣을 땐 시크릿 부분 `***` 처리
+- `.env.example` 파일 만들어두기 (값은 비워둠)
+
+### 민감 데이터 처리
+- **가치관 답변**: 암호화 저장 검토
+- **본인인증 정보**: 별도 테이블 분리, 접근 제한
+- **로그에 PII 남기지 않기**: 이메일·전화번호 마스킹
+
+---
+
+## 8. AI 사용 한도 룰 (생산성·정신건강 유지)
+
+혼자 AI로 개발하면 **무한 루프**에 빠지기 쉬워요. 안 되는 걸 AI에게 계속 물어보다가 하루 날려먹는 함정.
+
+### 30분 룰
+> **AI와 같은 문제로 30분 이상 씨름 중이라면 멈춰라.**
+
+이 중 하나로 전환:
+1. 다른 AI 도구로 같은 질문 (Claude → ChatGPT 등)
+2. 공식 문서·GitHub 이슈 검색
+3. 작업 잠시 멈추고 산책
+4. 더 작게 쪼개기
+
+### 신뢰도 체크
+AI가 만든 코드 중 **"왠지 잘 안 되는데 그럴듯한 답이 계속 나오는 상황"** = 환각(hallucination) 신호.
+- 라이브러리 API 이름이 어딘가 어색함
+- 존재하지 않는 메서드 호출
+- 버전이 안 맞는 사용법
+→ **AI 답변 그만 받고 공식 문서 직접 확인**
+
+### 종료 시간 룰
+- **하루 코딩 8시간 초과 금지** (특히 솔로 개발자)
+- **새벽 코딩 금지** (피곤한 상태로 AI 코드 검토 = 재앙)
+- **금요일 저녁 머지 금지** (주말에 망가지면 답 없음)
+
+---
+
+## 9. 문서화 룰 (혼자라도 필수)
+
+### 9-1. 필수 문서 (프로젝트 루트에)
+
+```
+README.md              # 프로젝트 개요, 실행법
+ARCHITECTURE.md        # 전체 구조, 주요 결정사항
+DECISIONS.md           # ADR (왜 이 기술을 골랐는가)
+.env.example           # 환경변수 템플릿
+HARNESS_RULES.md       # 이 문서
+```
+
+### 9-2. 코드 주석 룰
+
+```typescript
+// ❌ 나쁜 주석 — 코드가 하는 일 그대로 설명
+// userId를 가져온다
+const userId = session.user.id;
+
+// ✅ 좋은 주석 — 왜 이렇게 했는지 설명
+// Supabase Auth는 RLS 정책 때문에 매 요청마다 세션 재확인 필요
+const userId = session.user.id;
+
+// ✅ AI에게 작업 시킬 때를 위한 주석
+// TODO(claude): 이 함수에 페이지네이션 추가, 기본 size=20
+```
+
+### 9-3. AI 협업용 문서 (CLAUDE.md / .cursorrules)
+
+프로젝트 루트에 AI가 매번 참고할 컨텍스트 파일:
+
+```markdown
+# 언니사이드 프로젝트 컨텍스트
+
+## 기술 스택
+- Next.js 14 (App Router)
+- TypeScript (strict mode)
+- Tailwind CSS + shadcn/ui
+- Supabase (DB + Auth)
+- Vercel (배포)
+
+## 코딩 컨벤션
+- 함수: camelCase
+- 컴포넌트: PascalCase
+- 상수: UPPER_SNAKE_CASE
+- 파일명: kebab-case (컴포넌트는 PascalCase)
+
+## 도메인 용어
+- "결" = 가치관 (값. value)
+- "사이더" = 일반 사용자
+- "호스트 언니" = 모임장
+- "결매칭" = 가치관 기반 매칭
+
+## 절대 룰
+- any 타입 금지 → unknown 또는 명시적 타입
+- console.log 금지 (디버깅 후 제거)
+- 인증·결제·매칭 알고리즘은 AI 자동완성 금지 영역
+```
+
+---
+
+## 10. 테스트·QA 룰 (최소한)
+
+솔로 개발자에게 모든 테스트는 사치. 하지만 **핵심 영역만은 테스트 필수**.
+
+### 필수 테스트 영역
+1. **매칭 알고리즘** — 핵심 IP, 단위 테스트 필수
+2. **본인 인증 플로우** — 보안 핵심
+3. **결제 로직** — (있다면) 절대 빠뜨리지 말 것
+4. **가치관 점수 계산** — 비즈니스 핵심 로직
+
+### 안 해도 되는 테스트
+- UI 컴포넌트 스타일 테스트 (눈으로 확인)
+- 단순 CRUD 라우트 (수동 테스트로 OK)
+- 외부 라이브러리 테스트 (믿음)
+
+### 테스트 코드도 AI에 맡겨라
+```
+이 함수에 대한 Vitest 단위 테스트를 작성해주세요.
+- 정상 케이스 3개
+- 엣지 케이스 (빈 값, null, 잘못된 타입) 3개
+- 에러 케이스 2개
+```
+
+---
+
+## 11. 데이터·DB 룰
+
+언니사이드는 **유저 데이터가 자산**이에요. 데이터 사고 = 서비스 종말.
+
+### 절대 룰
+- ❌ **프로덕션 DB에 직접 쿼리 실행 금지** — 항상 마이그레이션으로
+- ❌ **DELETE/UPDATE WHERE 조건 없이 실행 금지**
+- ❌ **AI가 만든 마이그레이션 SQL 그대로 실행 금지** — 한 줄씩 검토
+- ✅ **모든 마이그레이션 파일은 Git에 커밋**
+- ✅ **매일 자동 백업 켜기** (Supabase 기본 제공)
+
+### 스키마 변경 룰
+1. 로컬 환경에서 먼저 적용
+2. 시드 데이터로 동작 확인
+3. AI에게 마이그레이션 SQL 검토 요청
+4. 스테이징(또는 미리 만든 테스트 DB)에서 검증
+5. 프로덕션 적용 (가능하면 트래픽 적은 시간대)
+
+---
+
+## 12. 배포·운영 룰
+
+### 12-1. 배포 전 체크리스트
+- [ ] 로컬에서 빌드 성공 (`next build`)
+- [ ] 타입 에러 없음 (`tsc --noEmit`)
+- [ ] 린트 통과 (`eslint`)
+- [ ] 환경변수 모두 설정됨
+- [ ] 새 의존성이 `package.json`에 추가됨
+- [ ] 마이그레이션 적용됨 (DB 변경 시)
+- [ ] 시크릿 코드에 노출 안 됨 확인
+
+### 12-2. 모니터링 (무료로 가능)
+- **Vercel Analytics** — 기본 트래픽
+- **Sentry** (무료 플랜) — 에러 트래킹 필수
+- **Supabase Dashboard** — DB 상태
+- **UptimeRobot** (무료) — 다운타임 알림
+
+---
+
+## 13. 솔로 개발자 위기 관리 (Bus Factor 대응)
+
+> **"내가 갑자기 일주일 못 하게 되면?"** 을 가정하고 준비하기.
+
+### 필수 준비물
+1. **모든 비밀번호·시크릿을 1Password 등에 저장** — 가족·동업자가 접근 가능하게
+2. **README에 "어떻게 실행하나" 명확히 작성** — 처음 보는 사람도 따라할 수 있게
+3. **DECISIONS.md에 주요 결정사항 기록** — 왜 이 기술을 골랐는지
+4. **Vercel·Supabase 청구서 알림 설정** — 카드 만료로 서비스 중단 방지
+
+---
+
+## 14. 우선순위 룰 (시간 없을 때)
+
+모든 룰을 다 지킬 순 없음. **포기 순서**를 미리 정해두기.
+
+### 절대 포기하지 말 것 🔴
+- 시크릿·보안 룰 (8번)
+- 데이터·DB 룰 (11번)
+- 머지 전 체크리스트 (4-1)
+
+### 바쁘면 줄여도 될 것 🟡
+- 단위 테스트 (10번) — 핵심 외에는 생략
+- 문서화 (9번) — 일단 코딩 후 나중에
+- AI 셀프 리뷰 (4-2) — 간단한 변경은 스킵
+
+### 후순위 🟢
+- 코드 스타일 완벽주의
+- 리팩토링 (작동하면 일단 둬도 됨)
+- 100% 타입 안전성
+
+---
+
+## 15. 매주 회고 (10분만 투자)
+
+매주 금요일 저녁 또는 일요일 오전에 10분:
+
+1. **이번 주 AI가 만든 코드 중 후회되는 것** — 다음에 어떻게 다르게 시킬지
+2. **반복적으로 했던 프롬프트** — 템플릿화할 수 있는가
+3. **이 하네스 룰 중 안 지킨 것** — 왜 안 지켰나, 룰을 고칠 것인가 행동을 고칠 것인가
+4. **다음 주 핵심 작업 1~3개만** — 욕심 부리지 말 것
+
+---
+
+## 16. 핵심 마인드셋
+
+> **"AI는 자기 확신에 찬 인턴이다."**
+
+- 알려주면 빠르게 잘함
+- 모르는 걸 모른다고 안 함 (그럴듯하게 지어냄)
+- 컨텍스트 없으면 엉뚱한 데로 감
+- 매번 같은 실수 반복 가능 (학습 안 됨)
+- 그래도 잘 쓰면 1인이 3인 몫
+
+→ **이 인턴을 잘 부리는 게 솔로 개발의 핵심 역량.**
+
+---
+
+## 부록: 권장 초기 셋업 (체크리스트)
+
+언니사이드 프로젝트 시작할 때 이 순서로:
+
+- [ ] Next.js 14 프로젝트 생성 (App Router + TypeScript)
+- [ ] Tailwind + shadcn/ui 설치
+- [ ] Supabase 프로젝트 생성 + 환경변수 설정
+- [ ] ESLint + Prettier 설정
+- [ ] `.gitignore` 확인
+- [ ] `CLAUDE.md` 또는 `.cursorrules` 작성
+- [ ] `.env.example` 작성
+- [ ] `README.md` 기본 작성
+- [ ] Vercel 연결
+- [ ] Sentry 연동 (무료 플랜)
+- [ ] 이 하네스 룰 문서를 프로젝트에 복사
+- [ ] 첫 커밋 → main 브랜치 보호 설정
+
+---
+
+*문서 버전 1.0 · 언니사이드 (UnnieSide) MVP 개발 하네스 룰*
+*솔로 개발자 + Next.js + AI 코딩 도구 환경*

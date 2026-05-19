@@ -4,6 +4,8 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 
 import { prisma } from "@/lib/prisma";
 
+const publicRoutes = ["/", "/login"];
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   secret: process.env.AUTH_SECRET,
@@ -18,6 +20,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   pages: {
     signIn: "/login",
+  },
+  callbacks: {
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isPublic = publicRoutes.includes(nextUrl.pathname);
+
+      if (isPublic) {
+        if (isLoggedIn && nextUrl.pathname === "/login") {
+          return Response.redirect(new URL("/home", nextUrl));
+        }
+        return true;
+      }
+
+      return isLoggedIn;
+    },
   },
   trustHost: true,
 });

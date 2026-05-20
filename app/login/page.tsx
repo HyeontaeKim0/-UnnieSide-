@@ -15,7 +15,7 @@ export default function LoginPage() {
           />
           <div className="flex flex-col items-center justify-center gap-2">
             <span className="text-2xl text-[#4A4A4A] font-bold">
-              <span className="text-[#D97B2C]">취향</span>이 닿는 사람들의 이웃
+              <span className="text-signature">취향</span>이 닿는 사람들의 이웃
               동네
             </span>
             <span className="text-sm text-[#4A4A4A]">

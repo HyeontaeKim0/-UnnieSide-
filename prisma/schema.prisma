@@ -46,6 +46,28 @@ model User {
   bio String? @db.Text
   accounts      Account[]
   sessions      Session[]
+  meetings      Meeting[]
+}
+
+model Meeting {
+  id              String   @id @default(cuid())
+  title           String
+  description     String   @db.Text
+  image           String
+  category        String
+  location        String
+  date            String
+  time            String
+  duration        String?
+  price           String
+  maxParticipants Int
+  isOnline        Boolean  @default(false)
+  tags            String[]
+  filter          String[]
+  hostId          String
+  host            User     @relation(fields: [hostId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model VerificationToken {

@@ -1,7 +1,26 @@
-import type { MeetingData } from "@/lib/types/MeetingData";
 import { Button } from "@heroui/react";
+import { CATEGORY_LABELS } from "@/lib/utils/MeetingCategories";
+import type { Session } from "next-auth";
 
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
+
+interface MeetingWithHost {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  category: string;
+  location: string;
+  date: string;
+  time: string;
+  duration: string | null;
+  price: string;
+  maxParticipants: number;
+  isOnline: boolean;
+  tags: string[];
+  filter: string[];
+  host: { name: string | null; image: string | null; id: string };
+}
 
 function getDateParts(dateStr: string) {
   const date = new Date(dateStr);
@@ -12,43 +31,46 @@ function getDateParts(dateStr: string) {
 }
 
 export default function MeetingCard({
-  meetingData,
+  meeting,
+  session,
 }: {
-  meetingData: MeetingData;
+  meeting: MeetingWithHost;
+  session: Session;
 }) {
-  const { day, dayOfWeek } = getDateParts(meetingData.date);
-  const participationRate = Math.round(
-    (meetingData.participants / meetingData.maxParticipants) * 100,
-  );
+  const { day, dayOfWeek } = getDateParts(meeting.date);
+  const isHost = session?.user?.id === meeting.host.id;
 
   return (
-    <div className="flex w-full rounded-2xl  bg-white overflow-hidden shadow-sm border border-gray-100">
+    <div className="flex w-full rounded-2xl bg-white overflow-hidden shadow-sm border border-gray-100">
       {/* 이미지 섹션 */}
       <div className="w-[200px] min-h-[160px] shrink-0">
-        <img
-          src={meetingData.image}
-          alt={meetingData.title}
-          className="w-full h-full object-cover"
-        />
+        {meeting.image ? (
+          <img
+            src={meeting.image}
+            alt={meeting.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-[#E8E0D6] flex items-center justify-center text-[#8a8175] text-sm">
+            이미지 없음
+          </div>
+        )}
       </div>
 
       {/* 콘텐츠 섹션 */}
-      <div className="flex flex-col justify-between flex-1 px-6 py-5">
+      <div className="flex flex-col justify-between flex-1 px-4 py-5">
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-semibold text-[#D97B2C] bg-[#FFF3E8] rounded-full px-3 py-1 w-fit">
-            {meetingData.category}
+          <span className="text-xs font-semibold text-signature bg-signature/15 rounded-full px-3 py-1 w-fit">
+            {CATEGORY_LABELS[meeting.category] ?? meeting.category}
           </span>
-          <h3 className="text-lg font-bold text-[#2A241D]">
-            {meetingData.title}
-          </h3>
+          <h3 className="text-lg font-bold text-[#2A241D]">{meeting.title}</h3>
           <p className="text-sm text-[#8C8478] leading-relaxed line-clamp-2">
-            {meetingData.description}
+            {meeting.description}
           </p>
         </div>
         <div className="flex items-center gap-4 mt-3 text-sm text-[#6B6358]">
           <span className="flex items-center gap-1.5">
-            <span>{meetingData.groupIcon}</span>
-            <span className="font-medium">{meetingData.groupName}</span>
+            <span className="font-medium">{meeting.host.name ?? "호스트"}</span>
           </span>
           <span className="flex items-center gap-1.5">
             <svg
@@ -63,7 +85,9 @@ export default function MeetingCard({
                 fill="currentColor"
               />
             </svg>
-            <span>{meetingData.location}</span>
+            <span>
+              {meeting.isOnline ? "온라인" : meeting.location || "미정"}
+            </span>
           </span>
         </div>
       </div>
@@ -77,30 +101,30 @@ export default function MeetingCard({
               {dayOfWeek}
             </span>
           </div>
-          <span className="text-sm text-[#8C8478] ">
-            {meetingData.time} · {meetingData.price}
+          <span className="text-sm text-[#8C8478]">
+            {meeting.time} · {meeting.price}
           </span>
         </div>
 
         <div className="flex flex-col items-center gap-2 w-full mt-3">
           <div className="flex items-center justify-between w-full text-xs text-[#6B6358]">
-            <span>
-              참여 {meetingData.participants}/{meetingData.maxParticipants}
-            </span>
-            <span className="font-semibold">{participationRate}%</span>
+            <span>정원 {meeting.maxParticipants}명</span>
           </div>
-          <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#8B7E3B] rounded-full transition-all"
-              style={{ width: `${participationRate}%` }}
-            />
-          </div>
-          <Button
-            className="w-full mt-2 bg-[#D97B2C] text-white font-semibold text-sm rounded-xl h-9"
-            size="sm"
-          >
-            참여 신청
-          </Button>
+          {isHost ? (
+            <Button
+              className="w-full mt-2 bg-signature text-white font-semibold text-sm rounded-xl h-9"
+              size="sm"
+            >
+              모임 관리
+            </Button>
+          ) : (
+            <Button
+              className="w-full mt-2 bg-signature text-white font-semibold text-sm rounded-xl h-9"
+              size="sm"
+            >
+              참여 신청
+            </Button>
+          )}
         </div>
       </div>
     </div>

@@ -19,6 +19,7 @@ export const mockMeetingData: MeetingData[] = [
     maxParticipants: 10,
     isFull: false,
     tags: ["독서모임", "책읽기", "독서"],
+    filter: ["초보환영", "오프라인"],
   },
   {
     id: 2,
@@ -38,6 +39,7 @@ export const mockMeetingData: MeetingData[] = [
     maxParticipants: 20,
     isFull: false,
     tags: ["등산모임", "새벽등반", "등산"],
+    filter: ["초보환영", "오프라인", "무료"],
   },
   {
     id: 3,
@@ -56,6 +58,7 @@ export const mockMeetingData: MeetingData[] = [
     maxParticipants: 20,
     isFull: false,
     tags: ["등산모임", "등산", "등산크루"],
+    filter: ["초보환영", "오프라인", "무료"],
   },
   {
     id: 4,
@@ -74,5 +77,6 @@ export const mockMeetingData: MeetingData[] = [
     maxParticipants: 20,
     isFull: false,
     tags: ["등산모임", "등산", "등산크루"],
+    filter: ["초보환영", "오프라인", "무료"],
   },
 ];

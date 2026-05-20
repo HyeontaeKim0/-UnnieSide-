@@ -4,9 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOutAction } from "@/actions/auth";
 import type { Session } from "next-auth";
-import Image from "next/image";
-import { Button } from "@heroui/react";
+
 import MyProfile from "./component/myProfile/MyProfile";
+import SearchInput from "./component/searchInput/SearchInput";
 
 export default function NavBar({ session }: { session: Session | null }) {
   const pathname = usePathname();
@@ -15,7 +15,7 @@ export default function NavBar({ session }: { session: Session | null }) {
       <div className="flex items-center gap-6 justify-between w-full">
         <div className="flex items-center gap-6">
           <div>
-            <span className="text-2xl text-[#D97B2C] font-bold">LOGO</span>
+            <span className="text-2xl text-signature font-bold">LOGO</span>
           </div>
           <div className="flex items-center space-x-2">
             <Link
@@ -26,7 +26,7 @@ export default function NavBar({ session }: { session: Session | null }) {
             </Link>
             <Link
               href="/meeting"
-              className={`text-l font-bold text-[#4A4A4A] rounded-lg px-4 py-1 ${pathname === "/meeting" ? "bg-[#F4EFE6]" : ""}`}
+              className={`text-l font-bold text-[#4A4A4A] rounded-lg px-4 py-1 ${pathname === "/meeting" || pathname === "/meeting/create" ? "bg-[#F4EFE6]" : ""}`}
             >
               모임
             </Link>
@@ -38,6 +38,11 @@ export default function NavBar({ session }: { session: Session | null }) {
             </Link>
           </div>
         </div>
+        {pathname == "/meeting" && (
+          <div className="flex items-center gap-1">
+            <SearchInput />
+          </div>
+        )}
         <div className="flex items-center gap-1">
           <MyProfile
             session={session as Session}
